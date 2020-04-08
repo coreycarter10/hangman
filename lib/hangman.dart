@@ -1,50 +1,85 @@
 import 'dart:async';
 
+import 'package:meta/meta.dart';
+
 class HangmanGame {
   static const hanged = 7;
 
-  final List<String> wordList;
-  final Set<String> lettersGuessed = {};
+  final List<String> _wordList;
+  List<String> get wordList => List<String>.unmodifiable(_wordList);
+
+  final Set<String> _lettersGuessed = {};
+  List<String> get lettersGuessed => List<String>.unmodifiable(_lettersGuessed);
 
   HangmanWord _wordToGuess;
+  HangmanWord get wordToGuess => _wordToGuess;
 
-  int _wrongGuesses;
-  int get wrongGuess => _wrongGuesses;
+  int _wrongGuessesCount;
+  int get wrongGuesses => _wrongGuessesCount;
+  void set _wrongGuesses(int value) {
+    _wrongGuessesCount = value;
+    _broadcastWrongGuessesChange();
+  }
 
-  HangmanGame(List<String> words) : wordList = words.toList();
+  HangmanGame(List<String> words) : _wordList = words.toList();
+
+  final _onWordChange = StreamController<String>.broadcast();
+  Stream<String> get onWordChange => _onWordChange.stream;
+
+  final _onWrongGuessesChange = StreamController<int>.broadcast();
+  Stream<int> get onWrongGuessesChange => _onWrongGuessesChange.stream;
+
+  final _onGameOver = StreamController<bool>.broadcast();
+  Stream<bool> get onGameOver => _onGameOver.stream;
 
   void newGame() {
-    wordList.shuffle();
-    _wordToGuess = HangmanWord(wordList.first);
+    _wordList.shuffle();
+    _wordToGuess = HangmanWord(_wordList.first);
     _wrongGuesses = 0;
-    lettersGuessed.clear();
+    _lettersGuessed.clear();
 
-    // TODO; ANNOUNCE CHANGE
+    _broadcastWordChange();
   }
 
   void guessLetter(String letter) {
-    lettersGuessed.add(letter);
+    _lettersGuessed.add(letter);
 
     if (_wordToGuess.guessLetter(letter)) {
-      // TODO: ANNOUNCE RIGHT GUESS
-      // TODO: ANNOUNCE CHANGE
+      _broadcastWordChange();
 
-      if (_wordToGuess.isWordComplete) {
-        // TODO: ANNOUNCE WIN
+      if (_lettersGuessed.length >= _wordToGuess.uniqueLettersCount && _wordToGuess.isWordComplete) {
+        _broadcastGameOver(playerWon: true);
       }
     }
     else {
       _wrongGuesses++;
 
-      // TODO: Announce wrong guess
-
       if (isHanged) {
-        // TODO: ANNOUNCE LOSS
+        _broadcastGameOver(playerWon: false);
       }
     }
   }
 
-  bool get isHanged => _wrongGuesses >= hanged;
+  void _broadcastWordChange() => _onWordChange.add(wordToGuess.toString());
+  void _broadcastWrongGuessesChange() => _onWrongGuessesChange.add(wrongGuesses);
+  void _broadcastGameOver({@required bool playerWon}) => _onGameOver.add(playerWon);
+
+  bool get isHanged => _wrongGuessesCount >= hanged;
+
+  @override
+  String toString() {
+    return """
+Gallows: $wrongGuesses
+$wordToGuess
+$_lettersGuessed
+""";
+  }
+
+  void dispose() {
+    _onWordChange.close();
+    _onWrongGuessesChange.close();
+    _onGameOver.close();
+  }
 }
 
 class HangmanWord {
@@ -63,7 +98,7 @@ class HangmanWord {
   bool guessLetter(String letter) {
     final indexes = word.allIndexesOf(letter);
 
-    for (int i = 0; i < indexes.length; i++) {
+    for (int i in indexes) {
       _wordForDisplay[i] = letter;
     }
 
@@ -71,6 +106,9 @@ class HangmanWord {
   }
 
   bool get isWordComplete => !_wordForDisplay.contains(blank);
+
+  @override
+  String toString() => wordForDisplay;
 }
 
 extension StringUtils on String {
