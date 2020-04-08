@@ -12,5 +12,4 @@ void main() {
 
   print(game.wordToGuess.word);
   print(game.wordToGuess.uniqueLettersCount);
-  
 }

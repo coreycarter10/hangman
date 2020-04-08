@@ -14,12 +14,8 @@ class HangmanGame {
   HangmanWord _wordToGuess;
   HangmanWord get wordToGuess => _wordToGuess;
 
-  int _wrongGuessesCount;
-  int get wrongGuesses => _wrongGuessesCount;
-  void set _wrongGuesses(int value) {
-    _wrongGuessesCount = value;
-    _broadcastWrongGuessesChange();
-  }
+  int _wrongGuesses;
+  int get wrongGuesses => _wrongGuesses;
 
   HangmanGame(List<String> words) : _wordList = words.toList();
 
@@ -39,6 +35,7 @@ class HangmanGame {
     _lettersGuessed.clear();
 
     _broadcastWordChange();
+    _broadcastWrongGuessesChange();
   }
 
   void guessLetter(String letter) {
@@ -53,6 +50,7 @@ class HangmanGame {
     }
     else {
       _wrongGuesses++;
+      _broadcastWrongGuessesChange();
 
       if (isHanged) {
         _broadcastGameOver(playerWon: false);
@@ -64,7 +62,7 @@ class HangmanGame {
   void _broadcastWrongGuessesChange() => _onWrongGuessesChange.add(wrongGuesses);
   void _broadcastGameOver({@required bool playerWon}) => _onGameOver.add(playerWon);
 
-  bool get isHanged => _wrongGuessesCount >= hanged;
+  bool get isHanged => _wrongGuesses >= hanged;
 
   @override
   String toString() {
