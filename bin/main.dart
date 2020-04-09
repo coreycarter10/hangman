@@ -1,3 +1,6 @@
+import 'package:console/console.dart' show Console, Prompter;
+
+import 'package:hangman/console_utils.dart';
 import 'package:hangman/hangman.dart';
 import 'package:english_words/english_words.dart' as engWords;
 
@@ -10,6 +13,6 @@ void main() {
 
   game.newGame();
 
-  print(game.wordToGuess.word);
-  print(game.wordToGuess.uniqueLettersCount);
+  Console.setTextColor(ConsoleColor.blue.index);
+  Console.write("Make your first guess: ");
 }
